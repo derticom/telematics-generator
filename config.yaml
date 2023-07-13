@@ -1,0 +1,7 @@
+vehiclesCount: 10
+maxSpeed: 120
+maxTimeStep: 60
+cacheSize: 1000
+brokerHost: kafka:9092
+topicName: topic1
+grpsPort: 50051

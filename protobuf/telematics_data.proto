@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "generator/protobuf";
+
+message TelematicsDataProto {
+  int32 vehicle_id = 1;
+  int64 timestamp = 2;
+  int32 speed = 3;
+  double latitude = 4;
+  double longitude = 5;
+}
+
+message LatestDataRequest {
+}
+
+message RangeDataRequest {
+  int64 from_timestamp = 1;
+  int64 to_timestamp = 2;
+}
+
+service TelematicsDataService {
+  rpc GetLatestData(LatestDataRequest) returns (TelematicsDataProto);
+
+  rpc GetRangeData(RangeDataRequest) returns (stream TelematicsDataProto);
+}
+
+// protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative telematics_data.proto
