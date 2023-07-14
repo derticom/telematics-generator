@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"github.com/kellydunn/golang-geo"
+	geo "github.com/kellydunn/golang-geo"
 	"math/rand"
 	"telematics-generator/pkg/models"
 	"time"
@@ -23,7 +23,7 @@ func NewRandomTelematicsGenerator(maxSpeedArg int, maxTimeStepArg int) *RandomTe
 	}
 }
 
-func (g *RandomTelematicsGenerator) Generate(vehicleID int) <-chan models.TelematicsData {
+func (g *RandomTelematicsGenerator) Generate(vehicleID int, stop chan struct{}) <-chan models.TelematicsData {
 	out := make(chan models.TelematicsData)
 
 	go func() {
@@ -31,30 +31,36 @@ func (g *RandomTelematicsGenerator) Generate(vehicleID int) <-chan models.Telema
 		longitude := rand.Float64()*360 - 180
 
 		for {
-			deltaTime := rand.Float64() * float64(g.maxTimeStep)
+			select {
+			case <-stop:
+				close(out)
+				return
+			default:
+				deltaTime := rand.Float64() * float64(g.maxTimeStep)
 
-			speed := rand.Intn(g.maxSpeed)
+				speed := rand.Intn(g.maxSpeed)
 
-			distance := float64(speed) * (deltaTime / 3600)
+				distance := float64(speed) * (deltaTime / 3600)
 
-			direction := rand.Float64() * 360
+				direction := rand.Float64() * 360
 
-			p := geo.NewPoint(latitude, longitude)
+				p := geo.NewPoint(latitude, longitude)
 
-			newPoint := p.PointAtDistanceAndBearing(distance, direction)
+				newPoint := p.PointAtDistanceAndBearing(distance, direction)
 
-			out <- models.TelematicsData{
-				VehicleID: vehicleID,
-				Timestamp: time.Now(),
-				Speed:     speed,
-				Latitude:  newPoint.Lat(),
-				Longitude: newPoint.Lng(),
+				out <- models.TelematicsData{
+					VehicleID: vehicleID,
+					Timestamp: time.Now(),
+					Speed:     speed,
+					Latitude:  newPoint.Lat(),
+					Longitude: newPoint.Lng(),
+				}
+
+				time.Sleep(time.Duration(deltaTime) * time.Second)
+
+				latitude = newPoint.Lat()
+				longitude = newPoint.Lng()
 			}
-
-			time.Sleep(time.Duration(deltaTime) * time.Second)
-
-			latitude = newPoint.Lat()
-			longitude = newPoint.Lng()
 		}
 	}()
 

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"go.uber.org/goleak"
 	"testing"
 	"time"
 )
@@ -18,8 +19,9 @@ func TestNewRandomTelematicsGenerator(t *testing.T) {
 func TestGenerate(t *testing.T) {
 	gen := NewRandomTelematicsGenerator(100, 10)
 
+	stop := make(chan struct{})
 	vehicleID := 99
-	telematics := gen.Generate(vehicleID)
+	telematics := gen.Generate(vehicleID, stop)
 
 	select {
 	case data := <-telematics:
@@ -45,4 +47,10 @@ func TestGenerate(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for telematics data")
 	}
+
+	close(stop)
+
+	time.Sleep(5 * time.Second)
+
+	goleak.VerifyNone(t)
 }

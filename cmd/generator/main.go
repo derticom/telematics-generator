@@ -66,13 +66,15 @@ func main() {
 	var wg sync.WaitGroup
 
 	log.Println("Starting data generation")
+	stops := make([]chan struct{}, config.VehiclesCount)
 	for i := 1; i < config.VehiclesCount+1; i++ {
 		wg.Add(1)
+		stops[i-1] = make(chan struct{})
 
-		go func(id int) {
+		go func(stop chan struct{}, id int) {
 			defer wg.Done()
 
-			for telematicsData := range gen.Generate(id) {
+			for telematicsData := range gen.Generate(id, stop) {
 				telematicsDataCache.Add(telematicsData)
 
 				protoData := convertToProto(telematicsData)
@@ -82,7 +84,17 @@ func main() {
 					log.Printf("Failed to produce message: %v", err)
 				}
 			}
-		}(i)
+		}(stops[i-1], i)
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	<-c
+
+	log.Println("Stopping generators")
+	for _, stop := range stops {
+		close(stop)
 	}
 
 	wg.Wait()
@@ -92,10 +104,6 @@ func main() {
 	if err != nil {
 		log.Printf("Failed to close producer: %v", err)
 	}
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	<-c
 
 	log.Println("Stopping GRPC server")
 	grpcServer.GracefulStop()
