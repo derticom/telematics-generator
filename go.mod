@@ -1,4 +1,4 @@
-module generator
+module telematics-generator
 
 go 1.20
 

@@ -2,10 +2,10 @@ package grpc
 
 import (
 	"context"
-	"generator/pkg/cache"
-	"generator/pkg/models"
-	"generator/protobuf"
 	"google.golang.org/grpc"
+	"telematics-generator/pkg/cache"
+	"telematics-generator/pkg/models"
+	"telematics-generator/protobuf"
 	"testing"
 	"time"
 )

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "generator/protobuf";
+option go_package = "telematics-generator/protobuf";
 
 message TelematicsDataProto {
   int32 vehicle_id = 1;

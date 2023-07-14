@@ -2,12 +2,6 @@ package main
 
 import (
 	"fmt"
-	"generator/pkg/cache"
-	"generator/pkg/generator"
-	mygrpc "generator/pkg/grpc"
-	"generator/pkg/kafka"
-	"generator/pkg/models"
-	"generator/protobuf"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
@@ -16,6 +10,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"telematics-generator/pkg/cache"
+	"telematics-generator/pkg/generator"
+	mygrpc "telematics-generator/pkg/grpc"
+	"telematics-generator/pkg/kafka"
+	"telematics-generator/pkg/models"
+	"telematics-generator/protobuf"
 )
 
 type AppConfig struct {

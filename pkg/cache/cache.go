@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"generator/pkg/models"
+	"telematics-generator/pkg/models"
 )
 
 type TelematicsDataCache struct {

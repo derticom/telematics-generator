@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"generator/protobuf"
 	"google.golang.org/protobuf/proto"
+	"telematics-generator/protobuf"
 )
 
 type Producer struct {

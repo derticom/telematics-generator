@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"generator/pkg/cache"
-	"generator/pkg/generator"
-	"generator/pkg/grpc"
-	"generator/pkg/kafka"
-	"generator/protobuf"
 	"github.com/stretchr/testify/assert"
+	"telematics-generator/pkg/cache"
+	"telematics-generator/pkg/generator"
+	"telematics-generator/pkg/grpc"
+	"telematics-generator/pkg/kafka"
+	"telematics-generator/protobuf"
 )
 
 func TestGeneratorKafkaGRPC(t *testing.T) {

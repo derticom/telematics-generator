@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"generator/pkg/cache"
-	"generator/protobuf"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"telematics-generator/pkg/cache"
+	"telematics-generator/protobuf"
 )
 
 type Server struct {

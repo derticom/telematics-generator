@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"generator/pkg/models"
+	"telematics-generator/pkg/models"
 	"testing"
 	"time"
 )
@@ -25,7 +25,7 @@ func TestAddAndGetLatest(t *testing.T) {
 }
 
 func TestCapacity(t *testing.T) {
-	c := NewTelematicsDataCache(2)
+	c := NewTelematicsDataCache(1)
 	data1 := models.TelematicsData{
 		VehicleID: 1,
 		Timestamp: time.Now(),

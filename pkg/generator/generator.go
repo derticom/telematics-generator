@@ -1,9 +1,9 @@
 package generator
 
 import (
-	"generator/pkg/models"
 	"github.com/kellydunn/golang-geo"
 	"math/rand"
+	"telematics-generator/pkg/models"
 	"time"
 )
 
