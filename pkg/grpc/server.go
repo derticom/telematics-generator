@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"time"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"telematics-generator/pkg/cache"
 	"telematics-generator/protobuf"
+	"time"
 )
 
 type Server struct {
@@ -19,7 +19,7 @@ func NewServer(c *cache.TelematicsDataCache) *Server {
 	return &Server{cache: c}
 }
 
-func (s *Server) GetLatestData(ctx context.Context, req *protobuf.LatestDataRequest) (*protobuf.TelematicsDataProto, error) {
+func (s *Server) GetLatestData(ctx context.Context, req *emptypb.Empty) (*protobuf.TelematicsDataProto, error) {
 	data, ok := s.cache.GetLatest()
 	if !ok {
 		return nil, status.Error(codes.NotFound, "no data available")
