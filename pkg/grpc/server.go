@@ -11,11 +11,11 @@ import (
 )
 
 type Server struct {
-	cache *cache.TelematicsDataCache
+	cache cache.DataCacher
 	protobuf.UnimplementedTelematicsDataServiceServer
 }
 
-func NewServer(c *cache.TelematicsDataCache) *Server {
+func NewServer(c cache.DataCacher) *Server {
 	return &Server{cache: c}
 }
 
