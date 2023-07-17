@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v4.23.3
-// source: telematics_data.proto
+// source: protobuf/telematics_data.proto
 
 package protobuf
 
@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,9 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TelematicsDataServiceClient interface {
-	// Метод для получения последних телематических данных.
-	GetLatestData(ctx context.Context, in *LatestDataRequest, opts ...grpc.CallOption) (*TelematicsDataProto, error)
-	// Метод для получения телематических данных за определенный период.
+	GetLatestData(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TelematicsDataProto, error)
 	GetRangeData(ctx context.Context, in *RangeDataRequest, opts ...grpc.CallOption) (TelematicsDataService_GetRangeDataClient, error)
 }
 
@@ -36,7 +35,7 @@ func NewTelematicsDataServiceClient(cc grpc.ClientConnInterface) TelematicsDataS
 	return &telematicsDataServiceClient{cc}
 }
 
-func (c *telematicsDataServiceClient) GetLatestData(ctx context.Context, in *LatestDataRequest, opts ...grpc.CallOption) (*TelematicsDataProto, error) {
+func (c *telematicsDataServiceClient) GetLatestData(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TelematicsDataProto, error) {
 	out := new(TelematicsDataProto)
 	err := c.cc.Invoke(ctx, "/proto.TelematicsDataService/GetLatestData", in, out, opts...)
 	if err != nil {
@@ -81,9 +80,7 @@ func (x *telematicsDataServiceGetRangeDataClient) Recv() (*TelematicsDataProto, 
 // All implementations must embed UnimplementedTelematicsDataServiceServer
 // for forward compatibility
 type TelematicsDataServiceServer interface {
-	// Метод для получения последних телематических данных.
-	GetLatestData(context.Context, *LatestDataRequest) (*TelematicsDataProto, error)
-	// Метод для получения телематических данных за определенный период.
+	GetLatestData(context.Context, *emptypb.Empty) (*TelematicsDataProto, error)
 	GetRangeData(*RangeDataRequest, TelematicsDataService_GetRangeDataServer) error
 	mustEmbedUnimplementedTelematicsDataServiceServer()
 }
@@ -92,7 +89,7 @@ type TelematicsDataServiceServer interface {
 type UnimplementedTelematicsDataServiceServer struct {
 }
 
-func (UnimplementedTelematicsDataServiceServer) GetLatestData(context.Context, *LatestDataRequest) (*TelematicsDataProto, error) {
+func (UnimplementedTelematicsDataServiceServer) GetLatestData(context.Context, *emptypb.Empty) (*TelematicsDataProto, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestData not implemented")
 }
 func (UnimplementedTelematicsDataServiceServer) GetRangeData(*RangeDataRequest, TelematicsDataService_GetRangeDataServer) error {
@@ -112,7 +109,7 @@ func RegisterTelematicsDataServiceServer(s grpc.ServiceRegistrar, srv Telematics
 }
 
 func _TelematicsDataService_GetLatestData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LatestDataRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -124,7 +121,7 @@ func _TelematicsDataService_GetLatestData_Handler(srv interface{}, ctx context.C
 		FullMethod: "/proto.TelematicsDataService/GetLatestData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TelematicsDataServiceServer).GetLatestData(ctx, req.(*LatestDataRequest))
+		return srv.(TelematicsDataServiceServer).GetLatestData(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -169,5 +166,5 @@ var TelematicsDataService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "telematics_data.proto",
+	Metadata: "protobuf/telematics_data.proto",
 }

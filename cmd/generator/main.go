@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"telematics-generator/pkg/cache"
@@ -16,6 +17,7 @@ import (
 	"telematics-generator/pkg/kafka"
 	"telematics-generator/pkg/models"
 	"telematics-generator/protobuf"
+	"time"
 )
 
 type AppConfig struct {
@@ -26,25 +28,6 @@ type AppConfig struct {
 	BrokerHost    string
 	TopicName     string
 	GrpsPort      int
-}
-
-func loadConfig(configPath string) (*AppConfig, error) {
-	viper.SetConfigFile(configPath)
-	viper.SetConfigType("yaml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read the configuration file: %w", err)
-	}
-
-	return &AppConfig{
-		VehiclesCount: viper.GetInt("vehiclesCount"),
-		MaxSpeed:      viper.GetInt("maxSpeed"),
-		MaxTimeStep:   viper.GetInt("maxTimeStep"),
-		CacheSize:     viper.GetInt("cacheSize"),
-		BrokerHost:    viper.GetString("brokerHost"),
-		TopicName:     viper.GetString("topicName"),
-		GrpsPort:      viper.GetInt("grpsPort"),
-	}, nil
 }
 
 func main() {
@@ -83,13 +66,15 @@ func main() {
 	var wg sync.WaitGroup
 
 	log.Println("Starting data generation")
+	stops := make([]chan struct{}, config.VehiclesCount)
 	for i := 1; i < config.VehiclesCount+1; i++ {
 		wg.Add(1)
+		stops[i-1] = make(chan struct{})
 
-		go func(id int) {
+		go func(stop chan struct{}, id int) {
 			defer wg.Done()
 
-			for telematicsData := range gen.Generate(id) {
+			for telematicsData := range gen.Generate(id, stop) {
 				telematicsDataCache.Add(telematicsData)
 
 				protoData := convertToProto(telematicsData)
@@ -99,7 +84,17 @@ func main() {
 					log.Printf("Failed to produce message: %v", err)
 				}
 			}
-		}(i)
+		}(stops[i-1], i)
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	<-c
+
+	log.Println("Stopping generators")
+	for _, stop := range stops {
+		close(stop)
 	}
 
 	wg.Wait()
@@ -110,12 +105,94 @@ func main() {
 		log.Printf("Failed to close producer: %v", err)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	<-c
-
 	log.Println("Stopping GRPC server")
 	grpcServer.GracefulStop()
+}
+
+func loadConfig(configPath string) (*AppConfig, error) {
+	viper.SetConfigFile(configPath)
+	viper.SetConfigType("yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read the configuration file: %w", err)
+	}
+
+	vehiclesCountStr := viper.GetString("vehiclesCount")
+	vehiclesCount, err := strconv.Atoi(vehiclesCountStr)
+	if err != nil {
+		return nil, fmt.Errorf("vehiclesCount should be an integer: %w", err)
+	}
+	if vehiclesCount > 100 {
+		return nil, fmt.Errorf("vehiclesCount should be less than 100")
+	}
+	if vehiclesCount < 1 {
+		return nil, fmt.Errorf("vehiclesCount should be more than 1")
+	}
+
+	maxSpeedStr := viper.GetString("maxSpeed")
+	maxSpeed, err := strconv.Atoi(maxSpeedStr)
+	if err != nil {
+		return nil, fmt.Errorf("maxSpeed should be an integer: %w", err)
+	}
+	if maxSpeed < 1 {
+		return nil, fmt.Errorf("maxSpeed should be more than 1")
+	}
+	if maxSpeed > 200 {
+		return nil, fmt.Errorf("maxSpeed should be less than 200")
+	}
+
+	maxTimeStepStr := viper.GetString("maxTimeStep")
+	maxTimeStep, err := time.ParseDuration(maxTimeStepStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid maxTimeStep format: %w", err)
+	}
+	if maxTimeStep > 24*time.Hour {
+		return nil, fmt.Errorf("maxTimeStep should be less than 24h")
+	}
+
+	cacheSizeStr := viper.GetString("cacheSize")
+	cacheSize, err := strconv.Atoi(cacheSizeStr)
+	if err != nil {
+		return nil, fmt.Errorf("cacheSize should be an integer: %w", err)
+	}
+	if cacheSize < 1 {
+		return nil, fmt.Errorf("cacheSize should be more than 1")
+	}
+	if cacheSize > 1000_000 {
+		return nil, fmt.Errorf("cacheSize should be less than 1 000 000")
+	}
+
+	brokerHost := viper.GetString("brokerHost")
+	if brokerHost == "" {
+		return nil, fmt.Errorf("brokerHost is required")
+	}
+
+	topicName := viper.GetString("topicName")
+	if topicName == "" {
+		return nil, fmt.Errorf("topicName is required")
+	}
+
+	grpsPortStr := viper.GetString("grpsPort")
+	grpsPort, err := strconv.Atoi(grpsPortStr)
+	if err != nil {
+		return nil, fmt.Errorf("grpsPort should be an integer: %w", err)
+	}
+	if grpsPort < 0 {
+		return nil, fmt.Errorf("grpsPort should be more than 0")
+	}
+	if grpsPort > 65536 {
+		return nil, fmt.Errorf("grpsPort should be less than 65536")
+	}
+
+	return &AppConfig{
+		VehiclesCount: vehiclesCount,
+		MaxSpeed:      maxSpeed,
+		MaxTimeStep:   int(maxTimeStep.Seconds()),
+		CacheSize:     cacheSize,
+		BrokerHost:    brokerHost,
+		TopicName:     topicName,
+		GrpsPort:      grpsPort,
+	}, nil
 }
 
 func convertToProto(telematicsData models.TelematicsData) *protobuf.TelematicsDataProto {

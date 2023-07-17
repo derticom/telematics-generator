@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"telematics-generator/pkg/cache"
 	"telematics-generator/pkg/models"
 	"telematics-generator/protobuf"
@@ -23,7 +24,7 @@ func TestGetLatestData(t *testing.T) {
 
 	c.Add(data)
 
-	req := &protobuf.LatestDataRequest{}
+	req := &emptypb.Empty{}
 	resp, err := s.GetLatestData(context.Background(), req)
 	if err != nil {
 		t.Fatalf("GetLatestData() error = %v", err)

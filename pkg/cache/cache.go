@@ -10,6 +10,12 @@ import (
 	"telematics-generator/pkg/models"
 )
 
+type DataCacher interface {
+	GetLatest() (models.TelematicsData, bool)
+	GetRange(time.Time, time.Time) ([]models.TelematicsData, error)
+	Add(models.TelematicsData)
+}
+
 type TelematicsDataCache struct {
 	capacity     int
 	data         map[time.Time]*list.Element
