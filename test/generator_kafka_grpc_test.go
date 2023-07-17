@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,18 +18,24 @@ import (
 
 type mockKafkaProducer struct {
 	messages []*protobuf.TelematicsDataProto
+	mu       sync.Mutex
 }
 
 func (m *mockKafkaProducer) ProduceMessage(data *protobuf.TelematicsDataProto) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.messages = append(m.messages, data)
 	return nil
 }
 
 type mockServer struct {
 	data []*protobuf.TelematicsDataProto
+	mu   sync.Mutex
 }
 
 func (m *mockServer) GetLatestData(ctx context.Context, req *emptypb.Empty) (*protobuf.TelematicsDataProto, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if len(m.data) == 0 {
 		return nil, status.Error(codes.NotFound, "no data available")
 	}
@@ -36,6 +43,8 @@ func (m *mockServer) GetLatestData(ctx context.Context, req *emptypb.Empty) (*pr
 }
 
 func (m *mockServer) GetRangeData(ctx context.Context, req *protobuf.RangeDataRequest, srv protobuf.TelematicsDataService_GetRangeDataServer) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if len(m.data) == 0 {
 		return status.Error(codes.NotFound, "no data available")
 	}
@@ -75,15 +84,17 @@ func TestGeneratorKafkaGRPC(t *testing.T) {
 			assert.NoError(t, err)
 			fmt.Println(data)
 			dataCache.Add(data)
-
 		}
 	}()
 
 	time.Sleep(10 * time.Second)
 
-	server := &mockServer{
-		data: kafkaProducer.messages,
-	}
+	server := &mockServer{}
+	kafkaProducer.mu.Lock()
+	server.mu.Lock() // Добавляем блокировку здесь
+	server.data = append(server.data, kafkaProducer.messages...)
+	server.mu.Unlock() // Отпускаем блокировку здесь
+	kafkaProducer.mu.Unlock()
 
 	data, err := server.GetLatestData(ctx, &emptypb.Empty{})
 	fmt.Printf("Data from GetLatestData: %v\n", data)

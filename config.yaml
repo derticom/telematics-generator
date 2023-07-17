@@ -1,7 +1,7 @@
-vehiclesCount: 1              # valid value is from 1 to 100
-maxSpeed: 1                   # valid value is from 1 to 200
+vehiclesCount: 10             # valid value is from 1 to 100
+maxSpeed: 120                 # valid value is from 1 to 200
 maxTimeStep: 60s              # valid value is from 1s to 24h
 cacheSize: 1000               # valid value is from 1 to 1 000 000
-brokerHost: localhost:9092    # valid value has form host:port
+brokerHost: kafka:9092    # valid value has form host:port // localhost:9092
 topicName: topic1             # valid value is not empty string
 grpsPort: 50051               # valid value is from 0 to 65536
